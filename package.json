@@ -8,8 +8,6 @@
     "payment-api"
   ],
   "scripts": {
-    "clean": "rimraf ./lib",
-    "prebuild": "npm run clean",
     "build": "tsc",
     "prepublishOnly": "npm run build"
   },
