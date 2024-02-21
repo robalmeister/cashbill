@@ -1,0 +1,27 @@
+{
+  "name": "@robalmeister/cashbill",
+  "description": "Unofficial CashBill Payment Gateway & Account API client for Node.js",
+  "keywords": [
+    "cashbill",
+    "cashbill-api",
+    "payment-api"
+  ],
+
+  "license": "Apache-2.0",
+  "packageManager": "yarn@4.1.0",
+  "author": {
+    "email": "kontakt@robalmeister.pl",
+    "name": "Filip Wlodarczyk",
+    "url": "https://robalmeister.pl"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robalmeister/cashbill.git"
+  },
+  "bugs": {
+    "url": "https://github.com/robalmeister/cashbill/issues"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
