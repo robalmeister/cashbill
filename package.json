@@ -1,5 +1,5 @@
 {
-  "name": "@robalmeister/cashbill",
+  "name": "cashbill-client",
   "version": "1.0.0",
   "description": "Unofficial CashBill Payment Gateway & Account API client for Node.js",
   "keywords": [
