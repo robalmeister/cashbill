@@ -1,5 +1,5 @@
-import { Payments } from '@/payments'
+import { Payments } from './payments'
 
-export * from '@/types'
 export { Payments }
+export * from './types'
 

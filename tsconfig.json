@@ -2,13 +2,12 @@
   "compilerOptions": {
     "target": "esnext",
     "declaration": true,
-    "outDir": "./lib",
+    "outDir": ".",
     "module": "CommonJS",
     "moduleResolution": "node",
-    "esModuleInterop": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  }
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["*.js", "*.d.ts"]
 }
 

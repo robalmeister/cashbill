@@ -73,13 +73,18 @@ export enum Language {
 
 
 export type NotificationType = {
-    command: string,
+    command: NotificationCommand,
     arguments: string,
     signature: string
 }
 
 export type NotificationResponse = {
     orderId: string,
+}
+
+export enum NotificationCommand {
+    transactionStatusChanged = "transactionStatusChanged"
+
 }
 
 export enum PaymentStatus {

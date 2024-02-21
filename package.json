@@ -1,6 +1,6 @@
 {
   "name": "cashbill-wrapper",
-  "version": "1.0.2-beta",
+  "version": "1.2.0-beta",
   "description": "Unofficial CashBill Payment Gateway & Account API client for Node.js",
   "keywords": [
     "cashbill",
@@ -9,13 +9,14 @@
   ],
   "main": "lib/index.js",
   "scripts": {
-    "clean": "yarn rimraf ./lib",
-    "prebuild": "npm run clean",
+    "clean": "yarn rimraf *.d.ts *.js",
+    "prebuild": "yarn run clean",
     "build": "tsc",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "yarn run build"
   },
   "files": [
-    "lib"
+    "*.d.ts",
+    "*.js"
   ],
   "license": "Apache-2.0",
   "packageManager": "yarn@4.1.0",

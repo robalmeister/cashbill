@@ -7,25 +7,20 @@ import {
     PaymentGatewayConfig,
     PaymentResponse,
     PutPaymentRequest
-} from "@/types";
-import "node:crypto"
+} from "./types";
 
 export class Payments {
     private readonly REST_URL: string
     private readonly ENCODER = new TextEncoder()
-    private readonly DECODER = new TextDecoder()
+
 
     constructor(private readonly configuration: PaymentGatewayConfig) {
         this.REST_URL = configuration.environment == "production" ? "https://pay.cashbill.pl/ws/rest/" : "https://pay.cashbill.pl/testws/rest/"
 
     }
 
-    async verifyNotify(notify: NotificationType): Promise<NotificationResponse> {
-        if (notify.command !== "transactionStatusChanged") {
-            throw new Error("Invalid command")
-        }
-
-        const hash = this.DECODER.decode(await crypto.subtle.digest({
+    async notify(notify: NotificationType): Promise<NotificationResponse> {
+        const hash = hex(await crypto.subtle.digest({
             name: "MD5"
         }, this.ENCODER.encode(notify.command + notify.arguments)))
 
@@ -38,50 +33,54 @@ export class Payments {
         }
     }
 
-    async createPayment(payment: Payment): Promise<CreatePaymentResponse> {
+    async create(payment: Payment): Promise<CreatePaymentResponse> {
         if (payment.referer == null) {
             payment.referer = "@robalmeister/cashbill"
+        }
+        if (payment.personalData == null) {
+            payment.personalData = {}
         }
 
         let optionList = ""
         if (payment.options != null) {
-            payment.options.forEach(value => {
+            void payment.options.forEach(value => {
                 optionList += value.name + value.value
             })
         }
-        payment.sign = this.DECODER.decode(await crypto.subtle.digest({
+        const sign = payment.title +
+            payment.amount.value +
+            payment.amount.currencyCode +
+            (payment.returnUrl ?? "") +
+            (payment.description ?? "") +
+            (payment.negativeReturnUrl ?? "") +
+            (payment.additionalData ?? "") +
+            (payment.paymentChannel ?? "") +
+            (payment.languageCode ?? "") +
+            (payment.referer ?? "") +
+            (payment.personalData!!.firstName ?? "") +
+            (payment.personalData!!.surname ?? "") +
+            (payment.personalData!!.email ?? "") +
+            (payment.personalData!!.country ?? "") +
+            (payment.personalData!!.city ?? "") +
+            (payment.personalData!!.postcode ?? "") +
+            (payment.personalData!!.street ?? "") +
+            (payment.personalData!!.house ?? "") +
+            (payment.personalData!!.flat ?? "") +
+            (payment.personalData!!.ip ?? "") +
+            optionList +
+            this.configuration.secretKey;
+        payment.sign = hex(await crypto.subtle.digest({
                 name: "SHA-1"
             },
-            this.ENCODER.encode(payment.title + payment.amount.value +
-                payment.amount.currencyCode +
-                payment.returnUrl ?? "" +
-                payment.description ?? "" +
-                payment.negativeReturnUrl ?? "" +
-                payment.additionalData ?? "" +
-                payment.paymentChannel ?? "" +
-                payment.languageCode ?? "" +
-                payment.referer ?? "" +
-                payment.personalData?.firstName ?? "" +
-                payment.personalData?.surname ?? "" +
-                payment.personalData?.email ?? "" +
-                payment.personalData?.country ?? "" +
-                payment.personalData?.city ?? "" +
-                payment.personalData?.postcode ?? "" +
-                payment.personalData?.street ?? "" +
-                payment.personalData?.house ?? "" +
-                payment.personalData?.flat ?? "" +
-                payment.personalData?.ip ?? "" +
-                optionList +
-                this.configuration.secretKey)))
+            this.ENCODER.encode(sign)))
+
 
         const response = await fetch(this.REST_URL + `payment/${this.configuration.shopId}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                payment
-            })
+            body: JSON.stringify(payment)
         })
 
         const json = await response.json()
@@ -94,8 +93,8 @@ export class Payments {
 
     }
 
-    async getPayment(request: GetPaymentRequest): Promise<PaymentResponse> {
-        const sign = this.DECODER.decode(
+    async get(request: GetPaymentRequest): Promise<PaymentResponse> {
+        const sign = hex(
             await crypto.subtle.digest({
                     name: "SHA-1"
                 },
@@ -114,11 +113,11 @@ export class Payments {
     }
 
     async changeReturnUrl(request: PutPaymentRequest) {
-         request.sign = this.DECODER.decode(
+         request.sign = hex(
             await crypto.subtle.digest({
                     name: "SHA-1"
                 },
-                this.ENCODER.encode(request.orderId + request.returnUrl + request.negativeReturnUrl ?? "" + this.configuration.secretKey)
+                this.ENCODER.encode(request.orderId + request.returnUrl + (request.negativeReturnUrl ?? "") + this.configuration.secretKey)
             )
         )
         const response = await fetch(this.REST_URL + `payment/${this.configuration.shopId}/${request.orderId}`, {
@@ -126,9 +125,7 @@ export class Payments {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                request
-            })
+            body: JSON.stringify(request)
         })
 
         if (!response.ok) {
@@ -137,7 +134,7 @@ export class Payments {
         }
     }
 
-    async getPayments(language: Language): Promise<PaymentChannelsResponse[]> {
+    async payments(language: Language): Promise<PaymentChannelsResponse[]> {
         const response = await fetch(this.REST_URL + `payment/${this.configuration.shopId}/${language}`)
 
         const json = await response.json()
@@ -148,4 +145,18 @@ export class Payments {
 
         return json
     }
+}
+
+function hex(buffer: ArrayBuffer) {
+    let digest = ''
+    const view = new DataView(buffer)
+    for(let i = 0; i < view.byteLength; i += 4) {
+        const value = view.getUint32(i)
+        const stringValue = value.toString(16)
+        const padding = '00000000'
+        const paddedValue = (padding + stringValue).slice(-padding.length)
+        digest += paddedValue
+    }
+
+    return digest
 }
