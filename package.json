@@ -7,7 +7,15 @@
     "cashbill-api",
     "payment-api"
   ],
-
+  "scripts": {
+    "clean": "rimraf ./lib",
+    "prebuild": "npm run clean",
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "lib"
+  ],
   "license": "Apache-2.0",
   "packageManager": "yarn@4.1.0",
   "author": {
@@ -15,7 +23,7 @@
     "name": "Filip Wlodarczyk",
     "url": "https://robalmeister.pl"
   },
-  "main": "src/index.ts",
+  "main": "lib/index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/robalmeister/cashbill.git"
