@@ -1,4 +1,13 @@
-import {CreatePaymentResponse, NotificationResponse, NotificationType, Payment, PaymentGatewayConfig} from "@/types";
+import {
+    CreatePaymentResponse,
+    GetPaymentRequest, Language,
+    NotificationResponse,
+    NotificationType,
+    Payment, PaymentChannelsResponse,
+    PaymentGatewayConfig,
+    PaymentResponse,
+    PutPaymentRequest
+} from "@/types";
 import "node:crypto"
 
 export class Payments {
@@ -85,4 +94,58 @@ export class Payments {
 
     }
 
+    async getPayment(request: GetPaymentRequest): Promise<PaymentResponse> {
+        const sign = this.DECODER.decode(
+            await crypto.subtle.digest({
+                    name: "SHA-1"
+                },
+                this.ENCODER.encode(request.orderId + this.configuration.secretKey)
+            )
+        )
+        const response = await fetch(this.REST_URL + `payment/${this.configuration.shopId}/${request.orderId}?sign=${sign}`)
+
+        const json = await response.json()
+
+        if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${json.errorMessage}`)
+        }
+
+        return json
+    }
+
+    async changeReturnUrl(request: PutPaymentRequest) {
+         request.sign = this.DECODER.decode(
+            await crypto.subtle.digest({
+                    name: "SHA-1"
+                },
+                this.ENCODER.encode(request.orderId + request.returnUrl + request.negativeReturnUrl ?? "" + this.configuration.secretKey)
+            )
+        )
+        const response = await fetch(this.REST_URL + `payment/${this.configuration.shopId}/${request.orderId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                request
+            })
+        })
+
+        if (!response.ok) {
+            const json = await response.json()
+            throw new Error(`Error ${response.status}: ${json.errorMessage}`)
+        }
+    }
+
+    async getPayments(language: Language): Promise<PaymentChannelsResponse[]> {
+        const response = await fetch(this.REST_URL + `payment/${this.configuration.shopId}/${language}`)
+
+        const json = await response.json()
+
+        if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${json.errorMessage}`)
+        }
+
+        return json
+    }
 }
